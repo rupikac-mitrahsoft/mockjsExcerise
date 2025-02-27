@@ -1,0 +1,9 @@
+.container {
+    margin-top: 69px;
+}
+
+/* style={{ marginTop: '69px', marginLeft: '69px', marginRight: '69px' }} */
+
+.common-style {
+    margin-left: 12px;
+}

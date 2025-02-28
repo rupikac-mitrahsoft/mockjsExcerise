@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import './TableObject.css';
+import { useState, useEffect } from "react";
+
 const JsonExercise = () => {
     const data = [
         {
@@ -43,27 +43,77 @@ const JsonExercise = () => {
         }
     ];
 
-    const support = 'support & maintenance';
-    const hr = 'hr & management';
+    const [dataMem, setDataMem] = useState([]);
+    const [obj, setObj] = useState({});
+
     const [checkedObj, setCheckedObj] = useState({
         development: false,
         designer: false,
-        [support]: false,
-        [hr]: false
+        supportMaintenance: false,
+        hrManagement: false
     });
 
     const [sortOrder, setSortOrder] = useState('asc');
+
+    useEffect(() => {
+        const sortData = data.map((totalData) => {
+            const sortedMembers = sortMembers(totalData.members);
+            setObj((prev) => ({
+                ...prev, [totalData.dept]: totalData.members
+            }))
+            return { ...totalData, members: sortedMembers }
+        });
+        setDataMem(sortData);
+    }, [])
 
     const handleDeptCheckboxChange = (dept, e) => {
         const isChecked = e.target.checked;
         setCheckedObj(prevState => {
             const updatedCheckedObj = { ...prevState, [dept]: isChecked };
+            console.log("updatedCheckedObj", updatedCheckedObj)
             return updatedCheckedObj;
         });
-    };
+        let updatedData = []
+
+        updatedData = dataMem?.map((department) => {
+            let res = {}
+            if (department.dept === dept) {
+                let members = []
+                if (isChecked) {
+                    const filteredMembers = department.members.filter(member => member.is_active);
+                    console.log("filteredMembers", filteredMembers)
+                    members = filteredMembers
+                    console.log("members", members)
+                } else {
+                    // members = data.find((b) => b?.dept === dept)?.members
+                    members = obj[dept]
+                    console.log("members", members)
+                }
+                res = { ...department, members }
+            } else {
+                res = department
+            }
+            return res
+        })
+
+        console.log("setDataMem", updatedData)
+        setDataMem(updatedData);
+    }
 
     const handleSortChange = (e) => {
-        setSortOrder(e.target.value);
+        const val = e.target.value;
+        setSortOrder(val);
+        const updatedData = dataMem.map(department => {
+            const sortedMembers = department.members.sort((a, b) => {
+                if (val === "asc") {
+                    return a.level - b.level;
+                } else {
+                    return b.level - a.level;
+                }
+            });
+            return { ...department, members: sortedMembers };
+        });
+        setDataMem(updatedData);
     };
 
     const sortMembers = (members) => {
@@ -76,25 +126,23 @@ const JsonExercise = () => {
         })
     }
 
-    const filterAndSortDepartments = (data, checkedObj) => {
-        return data.map((department) => {
-            const filteredMembers = department.members.filter(member => checkedObj[department.dept] ? member.is_active : true);
-            const sortedMembers = sortMembers(filteredMembers);
-            return { ...department, members: sortedMembers };
+    // const filterAndSortDepartments = (data, checkedObj) => {
+    //     return data.map((department) => {
+    //         const filteredMembers = department.members.filter(member => checkedObj[department.dept] ? member.is_active : true);
+    //         const sortedMembers = sortMembers(filteredMembers);
+    //         return { ...department, members: sortedMembers };
 
-        });
-    };
+    //     });
+    // };
 
-
-    const filteredAndSortedData = useMemo(() => {
-        return filterAndSortDepartments(data, checkedObj);
-    }, [checkedObj, sortOrder]);
-
+    // const filteredAndSortedData = useMemo(() => {
+    //     return filterAndSortDepartments(dataMem, checkedObj);
+    // }, [checkedObj, sortOrder]);
 
 
     return (
         <>
-            <div className="container">
+            <div style={{ marginTop: '69px', marginLeft: '69px', marginRight: '69px' }}>
                 <table className="table table-bordered">
                     <thead>
                         <tr>
@@ -107,7 +155,7 @@ const JsonExercise = () => {
                             <th>Status</th>
                             <th>
                                 Level
-                                <span className='common-style'>
+                                <span style={{ marginLeft: '12px' }}>
                                     <label>
                                         <input
                                             type="radio"
@@ -117,7 +165,7 @@ const JsonExercise = () => {
                                         />
                                         Ascending
                                     </label>
-                                    <label className='common-style'>
+                                    <label style={{ marginLeft: '12px' }}>
                                         <input
                                             type="radio"
                                             value="desc"
@@ -131,23 +179,24 @@ const JsonExercise = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredAndSortedData.map((totaldata) => (
+                        {dataMem.map((totaldata) => (
                             totaldata.members
                                 .map((m, index) => {
                                     const status = m.is_active ? 'Active' : 'Inactive';
                                     const level = m.level === 1 ? 'Trainee' : m.level === 2 ? 'Associative Engineer' : 'Engineer';
 
                                     return (
-                                        <tr>
+                                        <tr key={m.id}>
                                             {index === 0 ? (
                                                 <>
                                                     <td rowSpan={totaldata.members.length}>{totaldata.id}</td>
                                                     <td rowSpan={totaldata.members.length}>
                                                         {totaldata.dept}
-                                                        <span className='common-style'>
+                                                        <span style={{ marginLeft: '12px' }}>
                                                             <input
                                                                 type="checkbox"
                                                                 checked={checkedObj[totaldata.dept]}
+                                                                //onClick={(e) => handleDeptCheckboxClick(totaldata.dept, e)}
                                                                 onChange={(e) => handleDeptCheckboxChange(totaldata.dept, e)}
                                                             />
                                                         </span>
@@ -173,4 +222,4 @@ const JsonExercise = () => {
     );
 };
 
-export default JsonExercise;
+export default JsonExercise
